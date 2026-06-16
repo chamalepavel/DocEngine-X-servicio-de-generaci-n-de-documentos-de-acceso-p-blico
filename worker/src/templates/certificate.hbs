@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: Georgia, "Times New Roman", serif;
+      background: #fff;
+      color: #1a202c;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 40px;
+    }
+
+    .certificate {
+      width: 100%;
+      max-width: 720px;
+      border: 12px solid #b7791f;
+      padding: 60px 70px;
+      text-align: center;
+      position: relative;
+      background: #fffdf7;
+    }
+
+    /* Esquinas decorativas */
+    .certificate::before,
+    .certificate::after {
+      content: "✦";
+      position: absolute;
+      font-size: 28px;
+      color: #b7791f;
+    }
+    .certificate::before { top: 16px; left: 20px; }
+    .certificate::after  { bottom: 16px; right: 20px; }
+
+    .org {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      color: #b7791f;
+      margin-bottom: 20px;
+    }
+
+    .cert-title {
+      font-size: 38px;
+      font-weight: 700;
+      color: #1a202c;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+
+    .cert-subtitle {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: #718096;
+      margin-bottom: 36px;
+    }
+
+    .cert-body {
+      font-size: 15px;
+      color: #4a5568;
+      line-height: 1.8;
+      margin-bottom: 10px;
+    }
+
+    .recipient-name {
+      font-size: 32px;
+      font-weight: 700;
+      color: #b7791f;
+      margin: 16px 0;
+      border-bottom: 2px solid #b7791f;
+      padding-bottom: 12px;
+      display: inline-block;
+    }
+
+    .cert-description {
+      font-size: 14px;
+      color: #4a5568;
+      line-height: 1.8;
+      margin: 20px 0;
+    }
+
+    .details {
+      display: flex;
+      justify-content: center;
+      gap: 50px;
+      margin-top: 36px;
+    }
+    .detail-item label {
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #b7791f;
+      margin-bottom: 6px;
+    }
+    .detail-item p {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .signatures {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 50px;
+    }
+    .signature-block { text-align: center; width: 180px; }
+    .signature-line {
+      border-top: 1px solid #1a202c;
+      margin-bottom: 8px;
+    }
+    .signature-block p { font-size: 12px; color: #718096; }
+
+    .seal {
+      font-size: 11px;
+      color: #b7791f;
+      margin-top: 30px;
+      letter-spacing: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="certificate">
+    <div class="org">{{organization}}</div>
+
+    <div class="cert-title">CERTIFICADO</div>
+    <div class="cert-subtitle">de {{certificate_type}}</div>
+
+    <p class="cert-body">Se otorga el presente certificado a:</p>
+
+    <div class="recipient-name">{{recipient}}</div>
+
+    <p class="cert-description">{{description}}</p>
+
+    <div class="details">
+      <div class="detail-item">
+        <label>Fecha de emisión</label>
+        <p>{{date}}</p>
+      </div>
+      <div class="detail-item">
+        <label>Duración</label>
+        <p>{{duration}}</p>
+      </div>
+      {{#if score}}
+      <div class="detail-item">
+        <label>Calificación</label>
+        <p>{{score}}</p>
+      </div>
+      {{/if}}
+    </div>
+
+    <div class="signatures">
+      {{#each signatures}}
+      <div class="signature-block">
+        <div class="signature-line"></div>
+        <p><strong>{{this.name}}</strong></p>
+        <p>{{this.role}}</p>
+      </div>
+      {{/each}}
+    </div>
+
+    <div class="seal">DocEngine-X · Documento Oficial · Universidad Galileo</div>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; color: #1a1a2e; background: #fff; }
+
+    .header {
+      background: #16213e;
+      color: white;
+      padding: 30px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header h1 { font-size: 28px; letter-spacing: 2px; }
+    .header .label { font-size: 13px; color: #a0aec0; margin-top: 4px; }
+    .invoice-number { text-align: right; }
+    .invoice-number span { font-size: 22px; font-weight: bold; color: #e94560; }
+
+    .section { padding: 30px 40px; }
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #718096;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 8px;
+    }
+
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .info-block label { font-size: 11px; color: #718096; display: block; margin-bottom: 4px; }
+    .info-block p { font-size: 15px; font-weight: 600; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    thead tr { background: #16213e; color: white; }
+    thead th { padding: 12px 16px; text-align: left; font-size: 13px; }
+    tbody tr:nth-child(even) { background: #f7fafc; }
+    tbody td { padding: 12px 16px; font-size: 14px; border-bottom: 1px solid #e2e8f0; }
+    tbody td.amount { text-align: right; font-weight: 600; }
+
+    .totals {
+      margin-top: 20px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .totals-box { width: 280px; }
+    .totals-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+    .totals-row.grand-total {
+      border-top: 2px solid #16213e;
+      margin-top: 8px;
+      padding-top: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #16213e;
+    }
+
+    .footer {
+      background: #f7fafc;
+      padding: 20px 40px;
+      text-align: center;
+      font-size: 12px;
+      color: #718096;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Encabezado -->
+  <div class="header">
+    <div>
+      <h1>FACTURA</h1>
+      <div class="label">DocEngine-X · Sistema de Documentos</div>
+    </div>
+    <div class="invoice-number">
+      <div class="label">Número de factura</div>
+      <span>{{invoice_number}}</span>
+      <div class="label" style="margin-top:8px;">Fecha: {{date}}</div>
+    </div>
+  </div>
+
+  <!-- Información del cliente y empresa -->
+  <div class="section">
+    <div class="section-title">Información</div>
+    <div class="info-grid">
+      <div class="info-block">
+        <label>Emitido por</label>
+        <p>{{company}}</p>
+      </div>
+      <div class="info-block">
+        <label>Cliente</label>
+        <p>{{client}}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de items -->
+  <div class="section">
+    <div class="section-title">Detalle de servicios / productos</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Descripción</th>
+          <th>Cantidad</th>
+          <th>Precio unitario</th>
+          <th style="text-align:right;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each items}}
+        <tr>
+          <td>{{this.description}}</td>
+          <td>{{this.quantity}}</td>
+          <td>Q {{this.price}}</td>
+          <td class="amount">Q {{this.total}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+
+    <div class="totals">
+      <div class="totals-box">
+        <div class="totals-row">
+          <span>Subtotal</span>
+          <span>Q {{subtotal}}</span>
+        </div>
+        <div class="totals-row">
+          <span>IVA (12%)</span>
+          <span>Q {{tax}}</span>
+        </div>
+        <div class="totals-row grand-total">
+          <span>TOTAL</span>
+          <span>Q {{total}}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notas -->
+  {{#if notes}}
+  <div class="section">
+    <div class="section-title">Notas</div>
+    <p style="font-size:14px; color:#4a5568;">{{notes}}</p>
+  </div>
+  {{/if}}
+
+  <div class="footer">
+    Documento generado automáticamente por DocEngine-X · Universidad Galileo
+  </div>
+
+</body>
+</html>
