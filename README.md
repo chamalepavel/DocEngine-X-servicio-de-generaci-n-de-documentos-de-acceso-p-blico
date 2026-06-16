@@ -1,125 +1,45 @@
 # DocEngine-X
 
-Sistema de generación de documentos PDF a partir de datos JSON.
+Este proyecto lo construí para el curso de Interfaz y Experiencia de Usuario. La idea es simple: el usuario manda datos en JSON, elige qué tipo de documento quiere generar (una factura, un reporte o un certificado), y el sistema le devuelve un PDF listo para descargar, sin que la pantalla se congele ni tenga que esperar cargando.
 
----
+Lo que me interesaba resolver era exactamente ese problema: generar un PDF tarda varios segundos porque hay que abrir un navegador real, cargar el HTML y convertirlo. Si eso lo hago directo en la petición HTTP, el usuario se queda esperando sin respuesta. Entonces separé el trabajo en dos procesos: el backend recibe la solicitud, la mete a una cola y responde de inmediato con un ID. Un worker independiente toma ese trabajo, genera el PDF y avisa al frontend cuando terminó, todo en tiempo real a través de WebSockets.
 
-## Estructura del proyecto
+El proyecto tiene cuatro partes que trabajan juntas. El frontend está en React con Vite, el backend es Express con Socket.IO, el worker usa BullMQ con Puppeteer y Handlebars, y la base de datos es PostgreSQL. Redis hace dos cosas: guarda la cola de trabajos para BullMQ y sirve como canal de comunicación entre el worker y el backend.
 
-```
-Proyecto III/
-├── docker-compose.yml      → Levanta Redis y PostgreSQL
-├── .env.example            → Variables de entorno de referencia
-├── database/
-│   └── init.sql            → Crea la tabla public_documents
-├── backend/                → API Express + Socket.IO
-│   └── src/
-│       ├── index.js        → Entrada principal
-│       ├── db.js           → Conexión a PostgreSQL
-│       ├── routes/         → Rutas HTTP
-│       ├── controllers/    → Lógica de cada ruta
-│       └── services/       → Interacción con BullMQ y DB
-├── worker/                 → Procesador de la cola
-│   └── src/
-│       ├── worker.js       → Escucha la cola BullMQ
-│       ├── generator.js    → Handlebars + Puppeteer → PDF
-│       ├── storage.js      → Guarda el PDF (local / S3)
-│       └── templates/      → Plantillas .hbs (invoice, report, certificate)
-├── frontend/               → Panel React con Vite
-│   └── src/
-│       ├── App.jsx         → Socket.IO + layout principal
-│       ├── components/     → JsonEditor, DocumentHistory, StatusBadge
-│       └── services/api.js → Llamadas al backend
-└── uploads/                → PDFs generados (creado automáticamente)
-```
+Para levantar el entorno solo se necesita Node.js 18 y Docker Desktop.
 
----
-
-## Requisitos
-
-- Node.js 18+
-- Docker Desktop
-
----
-
-## Paso 1 — Levantar Redis y PostgreSQL
+Primero hay que levantar la base de datos y Redis:
 
 ```bash
-cd "Proyecto III"
 docker-compose up -d
 ```
 
-Esto levanta:
-- **PostgreSQL** en `localhost:5432` (crea la tabla automáticamente)
-- **Redis** en `localhost:6379`
+Eso levanta PostgreSQL en el puerto 5434 y Redis en el 6379. La tabla se crea sola con el script que está en database/init.sql.
 
----
-
-## Paso 2 — Iniciar el Backend
+Luego hay que correr el backend, el worker y el frontend cada uno en una terminal diferente:
 
 ```bash
 cd backend
 npm run dev
 ```
 
-Corre en: `http://localhost:4000`
-
----
-
-## Paso 3 — Iniciar el Worker
-
 ```bash
 cd worker
 npm run dev
 ```
-
-El worker escucha la cola y genera PDFs cuando llegan trabajos.
-
----
-
-## Paso 4 — Iniciar el Frontend
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Corre en: `http://localhost:5173`
+El backend queda en http://localhost:4000 y el frontend en http://localhost:5173.
 
----
+Las variables de entorno van en un archivo .env dentro de backend/ y otro dentro de worker/. El archivo .env.example en la raíz del proyecto tiene todos los valores que se necesitan copiar.
 
-## Flujo completo
+La API tiene tres endpoints. Con POST /api/documents se manda el JSON con el tipo de plantilla y los datos, y el sistema responde con el ID del documento y el estado "queued". Con GET /api/documents se consulta el historial completo, y se puede filtrar por estado agregando ?status=completed o cualquier otro estado válido. Con GET /api/documents/:id se consulta un documento específico.
 
-```
-Usuario escribe JSON + elige plantilla
-         ↓
-    POST /api/documents
-         ↓
-  Backend guarda en PostgreSQL (queued)
-  Backend manda a cola BullMQ
-  Backend responde 202 + documentId
-         ↓
-    Worker toma el trabajo
-    Worker → processing (Socket.IO)
-    JSON → Handlebars → HTML → Puppeteer → PDF
-    PDF guardado en /uploads/
-    Worker → completed + file_url (Socket.IO)
-         ↓
-  Frontend recibe evento Socket.IO
-  Muestra botón de descarga ✅
-```
-
----
-
-## API
-
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| POST | `/api/documents` | Genera un documento |
-| GET | `/api/documents` | Lista el historial público |
-| GET | `/api/documents?status=failed` | Filtra por estado |
-
-### Ejemplo de body (POST)
+Un ejemplo de lo que se le manda al POST:
 
 ```json
 {
@@ -139,29 +59,4 @@ Usuario escribe JSON + elige plantilla
 }
 ```
 
----
-
-## Variables de entorno
-
-Copiar `.env.example` como `.env` en `/backend` y `/worker`:
-
-```
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=docengine
-DB_PASSWORD=docengine123
-DB_NAME=docengine_db
-REDIS_HOST=localhost
-REDIS_PORT=6379
-PORT=4000
-BASE_URL=http://localhost:4000
-```
-
----
-
-## Para usar S3 en el futuro
-
-En `worker/src/storage.js`, las líneas comentadas al final de `saveFile()` muestran exactamente cómo conectar S3. Solo se necesita:
-1. Instalar `@aws-sdk/client-s3`
-2. Descomentar el bloque S3
-3. Agregar las credenciales en el `.env`
+Los PDFs generados se guardan en una carpeta uploads/ que se crea automáticamente. Si en algún momento se quiere usar S3 en lugar de almacenamiento local, en worker/src/storage.js está toda la lógica lista, solo hay que agregar las credenciales de AWS en el .env y el sistema las detecta solo.
